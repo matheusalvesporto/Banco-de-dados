@@ -1,0 +1,50 @@
+-- Criação da tabela de publicações
+CREATE TABLE posts (
+    id SERIAL PRIMARY KEY,               -- ID único para cada publicação
+    post_name VARCHAR(255) NOT NULL,     -- Nome ou título da publicação
+    post_date DATE NOT NULL,             -- Data da publicação
+    views INT DEFAULT 0,                 -- Número de visualizações
+    comments INT DEFAULT 0,              -- Número de comentários
+    likes INT DEFAULT 0,                 -- Número de curtidas
+    shares INT DEFAULT 0,                -- Número de compartilhamentos
+    saves INT DEFAULT 0,                 -- Número de salvamentos
+    media_type VARCHAR(50),              -- Tipo de mídia (imagem, vídeo, carrossel)
+    caption TEXT,                        -- Legenda da publicação
+    hashtags VARCHAR(255),               -- Hashtags usadas na publicação
+    post_url VARCHAR(255),               -- URL da publicação no Instagram
+    engagement_rate FLOAT                -- Coluna para armazenar a taxa de engajamento calculada manualmente
+);
+
+-- Tabela para armazenar informações dos seguidores
+CREATE TABLE followers (
+    id SERIAL PRIMARY KEY,               -- ID único para cada seguidor
+    follower_name VARCHAR(255),          -- Nome do seguidor
+    follow_date DATE,                    -- Data em que seguiu a página
+    total_posts_viewed INT DEFAULT 0,    -- Total de publicações visualizadas
+    total_comments_made INT DEFAULT 0    -- Total de comentários feitos
+);
+
+-- Tabela para armazenar interações (curtidas, comentários, compartilhamentos e salvamentos)
+CREATE TABLE interactions (
+    id SERIAL PRIMARY KEY,               -- ID único para cada interação
+    post_id INT REFERENCES posts(id),    -- Relacionamento com a tabela de publicações
+    follower_id INT REFERENCES followers(id), -- Relacionamento com a tabela de seguidores
+    interaction_type VARCHAR(50),        -- Tipo de interação (like, comment, share, save)
+    interaction_date DATE NOT NULL       -- Data da interação
+);
+
+-- Criação de uma view para ranking de publicações
+CREATE VIEW post_ranking AS
+SELECT
+    id,
+    post_name,
+    post_date,
+    views,
+    likes,
+    comments,
+    shares,
+    saves,
+    (likes + comments + shares + saves) / GREATEST(views, 1) AS engagement_rate,
+    ((likes * 0.4) + (comments * 0.3) + (shares * 0.2) + (saves * 0.1)) / GREATEST(views, 1) AS score -- Fórmula de pontuação ponderada
+FROM posts
+ORDER BY score DESC;
